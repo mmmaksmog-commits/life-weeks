@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Жизнь в неделях</title>
+  <meta name="description" content="Вся жизнь на одном экране: около 4000 недель. Отмечайте важные события и смотрите, сколько уже прожито.">
+  <meta name="theme-color" content="#faf7f2">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏳</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #faf7f2; --card: #fff; --ink: #1f1d1a; --muted: #857f75; --line: #ebe5da; --lived: #1f1d1a; --left: #e6e0d4; --now: #e4572e; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #141311; --card: #1d1c19; --ink: #f2eee6; --muted: #9e978b; --line: #2c2a26; --lived: #f2eee6; --left: #33302b; color-scheme: dark; } }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 Inter, system-ui, sans-serif; }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 900px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom)); }
+    h1 { margin: 0; font: 700 clamp(36px, 8vw, 58px)/1 'Playfair Display', Georgia, serif; }
+    h1 em { color: var(--now); }
+    .lead { margin: 12px 0 0; max-width: 560px; color: var(--muted); }
+    .card { margin-top: 20px; padding: 20px; border: 1px solid var(--line); border-radius: 22px; background: var(--card); }
+    .setup { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+    .field { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .field input, .field select { padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); font-size: 16px; color: var(--ink); }
+    .btn { padding: 12px 20px; border: 0; border-radius: 12px; background: var(--ink); color: var(--bg); font-weight: 700; }
+    .btn--soft { background: var(--left); color: var(--ink); }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 20px; }
+    .stat { padding: 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
+    .stat b { display: block; font: 700 28px 'Playfair Display', serif; }
+    .stat span { color: var(--muted); font-size: 13px; }
+    .progress { height: 8px; margin-top: 16px; border-radius: 4px; background: var(--left); overflow: hidden; }
+    .progress i { display: block; height: 100%; background: var(--now); border-radius: 4px; }
+
+    .grid-wrap { margin-top: 20px; }
+    .grid-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .grid-head h2 { margin: 0; font: 700 24px 'Playfair Display', serif; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+    .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 2px; vertical-align: -1px; }
+    .weeks { display: grid; grid-template-columns: 26px 1fr; gap: 0 6px; margin-top: 14px; }
+    .years { display: grid; grid-auto-rows: var(--cell); row-gap: var(--gap); font-size: 9px; color: var(--muted); text-align: right; line-height: var(--cell); }
+    .cells { display: grid; grid-template-columns: repeat(52, var(--cell)); gap: var(--gap); }
+    .w { width: var(--cell); height: var(--cell); border-radius: 2px; background: var(--left); padding: 0; border: 0; }
+    .w.l { background: var(--lived); opacity: 0.88; }
+    .w.n { background: var(--now); animation: pulse 1.4s ease-in-out infinite; }
+    .w.e { background: var(--c); opacity: 1; outline: 2px solid var(--c); outline-offset: 1px; position: relative; z-index: 1; }
+    @keyframes pulse { 50% { transform: scale(1.6); } }
+    .tip { position: fixed; z-index: 20; max-width: 240px; padding: 10px 12px; border-radius: 12px; background: var(--ink); color: var(--bg); font-size: 13px; pointer-events: none; transform: translate(-50%, calc(-100% - 10px)); }
+    .events { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+    .events li { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--bg); }
+    .events li span { font-size: 22px; text-align: center; }
+    .events small { display: block; color: var(--muted); }
+    .del { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
+    .add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .add input, .add select { flex: 1; min-width: 120px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); }
+    .quote { margin: 26px 0 0; font: italic 700 20px/1.4 'Playfair Display', serif; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Жизнь <em>в неделях</em></h1>
+    <p class="lead">Каждая клетка — одна неделя. Ряд — один год. Посмотрите на свою жизнь целиком и отметьте то, что действительно важно.</p>
+
+    <section class="card setup">
+      <label class="field">Дата рождения<input type="date" id="birth" required></label>
+      <label class="field">Ожидаемая длительность<select id="years"><option value="70">70 лет</option><option value="80" selected>80 лет</option><option value="90">90 лет</option><option value="100">100 лет</option></select></label>
+      <button class="btn" id="apply">Показать</button>
+    </section>
+
+    <div id="main" hidden>
+      <div class="stats" id="stats"></div>
+      <div class="progress"><i id="bar"></i></div>
+
+      <section class="card grid-wrap">
+        <div class="grid-head">
+          <h2>Ваша жизнь</h2>
+          <div class="legend"><span><i style="background:var(--lived)"></i>прожито</span><span><i style="background:var(--now)"></i>эта неделя</span><span><i style="background:var(--left)"></i>впереди</span></div>
+        </div>
+        <div class="weeks" id="weeks"><div class="years" id="yearLabels"></div><div class="cells" id="cells"></div></div>
+      </section>
+
+      <section class="card">
+        <div class="grid-head"><h2>Важные события</h2><span class="legend">Нажмите на клетку, чтобы выбрать дату</span></div>
+        <ul class="events" id="events"></ul>
+        <form class="add" id="addForm">
+          <select id="evEmoji" aria-label="Иконка"><option>🎓</option><option>💍</option><option>👶</option><option>✈️</option><option>🏠</option><option>💼</option><option>❤️</option><option>🏆</option><option>🐶</option><option>⭐</option></select>
+          <input id="evTitle" required maxlength="40" placeholder="Что произошло?">
+          <input id="evDate" type="date" required aria-label="Дата">
+          <button class="btn" type="submit">Добавить</button>
+        </form>
+      </section>
+      <p class="quote" id="quote"></p>
+    </div>
+  </main>
+  <div class="tip" id="tip" hidden></div>
+
+  <script>
+    const COLORS = { '🎓': '#3b82f6', '💍': '#ec4899', '👶': '#f59e0b', '✈️': '#06b6d4', '🏠': '#22c55e', '💼': '#8b5cf6', '❤️': '#ef4444', '🏆': '#eab308', '🐶': '#a16207', '⭐': '#e4572e' };
+    const QUOTES = ['«Жизнь длинна, если знаешь, как её использовать». — Сенека', '«Не откладывай на завтра то, что можно прожить сегодня»', '«Время — единственная валюта, которую нельзя вернуть»', '«Самые важные недели — те, что ещё впереди»'];
+    const WEEK = 7 * 864e5;
+    const $ = (id) => document.getElementById(id);
+    const store = { get: (k, d) => { try { return JSON.parse(localStorage.getItem('life_' + k)) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem('life_' + k, JSON.stringify(v)); } catch {} } };
+    let cfg = store.get('cfg', null);
+    let events = store.get('events', []);
+    const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+    const nf = (n) => Math.round(n).toLocaleString('ru-RU');
+
+    function weekIndex(dateStr) {
+      const b = parse(cfg.birth), d = parse(dateStr);
+      const year = d.getFullYear() - b.getFullYear() - (d < new Date(d.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
+      const start = new Date(b.getFullYear() + year, b.getMonth(), b.getDate());
+      return year * 52 + Math.min(51, Math.floor((d - start) / WEEK));
+    }
+
+    function render() {
+      if (!cfg) return;
+      $('main').hidden = false;
+      $('birth').value = cfg.birth; $('years').value = cfg.years;
+      const today = new Date();
+      const nowStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const now = weekIndex(nowStr);
+      const total = cfg.years * 52;
+      const days = (today - parse(cfg.birth)) / 864e5;
+      const pct = Math.min(100, (now / total) * 100);
+      const yearsLeft = Math.max(0, cfg.years - days / 365.25);
+      $('stats').innerHTML = [
+        [nf(now), 'недель прожито'], [nf(Math.max(0, total - now)), 'недель впереди'],
+        [`${pct.toFixed(1)}%`, 'пути пройдено'], [nf(yearsLeft), 'лет впереди'],
+        [nf(days), 'дней прожито'], [nf(days * 24 * 60 * 70 / 1e6) + ' млн', 'ударов сердца'],
+      ].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+      $('bar').style.width = `${pct}%`;
+
+      // Размер клетки под ширину экрана
+      const wrapW = Math.min(900, innerWidth) - 32 - 40 - 32;
+      const gap = wrapW > 600 ? 3 : wrapW > 300 ? 2 : 1;
+      const cell = Math.max(3, Math.floor((wrapW - 51 * gap) / 52));
+      $('weeks').style.setProperty('--cell', `${cell}px`);
+      $('weeks').style.setProperty('--gap', `${gap}px`);
+      $('yearLabels').innerHTML = Array.from({ length: cfg.years }, (_, y) => `<span>${y % 5 === 0 ? y : ''}</span>`).join('');
+      const evByWeek = new Map(events.map((e) => [weekIndex(e.date), e]));
+      let html = '';
+      for (let i = 0; i < total; i++) {
+        const ev = evByWeek.get(i);
+        const cls = ev ? 'w e' : i < now ? 'w l' : i === now ? 'w n' : 'w';
+        html += `<button class="${cls}" data-i="${i}"${ev ? ` style="--c:${COLORS[ev.emoji]}"` : ''} aria-label="Неделя ${i + 1}"></button>`;
+      }
+      $('cells').innerHTML = html;
+
+      $('events').innerHTML = events.length
+        ? [...events].sort((a, b) => a.date.localeCompare(b.date)).map((e) => `<li><span>${e.emoji}</span><div><b>${e.title.replace(/</g, '&lt;')}</b><small>${parse(e.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })} · ${Math.floor(weekIndex(e.date) / 52)} лет</small></div><button class="del" data-del="${e.id}" aria-label="Удалить">✕</button></li>`).join('')
+        : '<li style="grid-template-columns:1fr;color:var(--muted)">Пока пусто. Добавьте выпускной, свадьбу, первое путешествие…</li>';
+      $('quote').textContent = QUOTES[now % QUOTES.length];
+    }
+
+    function weekDate(i) {
+      const b = parse(cfg.birth);
+      const y = Math.floor(i / 52), w = i % 52;
+      return new Date(b.getFullYear() + y, b.getMonth(), b.getDate() + w * 7);
+    }
+
+    $('apply').onclick = () => {
+      if (!$('birth').value) { $('birth').reportValidity(); return; }
+      if (parse($('birth').value) > new Date()) { alert('Дата рождения не может быть в будущем'); return; }
+      cfg = { birth: $('birth').value, years: +$('years').value };
+      store.set('cfg', cfg);
+      if (!events.length) $('evDate').value = cfg.birth;
+      render();
+    };
+    $('cells').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-i]'); if (!b) return;
+      const d = weekDate(+b.dataset.i);
+      $('evDate').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      $('evTitle').focus();
+    });
+    $('cells').addEventListener('pointermove', (e) => {
+      const b = e.target.closest('[data-i]');
+      if (!b) { $('tip').hidden = true; return; }
+      const i = +b.dataset.i;
+      const ev = events.find((x) => weekIndex(x.date) === i);
+      $('tip').innerHTML = `${ev ? `${ev.emoji} <b>${ev.title.replace(/</g, '&lt;')}</b><br>` : ''}Возраст ${Math.floor(i / 52)} лет, неделя ${i % 52 + 1}<br>${weekDate(i).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      $('tip').style.left = `${e.clientX}px`; $('tip').style.top = `${e.clientY}px`;
+      $('tip').hidden = false;
+    });
+    $('cells').addEventListener('pointerleave', () => { $('tip').hidden = true; });
+    $('addForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (parse($('evDate').value) < parse(cfg.birth)) { alert('Событие не может быть раньше даты рождения'); return; }
+      events.push({ id: Date.now(), emoji: $('evEmoji').value, title: $('evTitle').value.trim(), date: $('evDate').value });
+      store.set('events', events);
+      $('evTitle').value = '';
+      render();
+    });
+    $('events').addEventListener('click', (e) => { const b = e.target.closest('[data-del]'); if (b) { events = events.filter((x) => x.id !== +b.dataset.del); store.set('events', events); render(); } });
+    window.addEventListener('resize', () => { clearTimeout(window.rt); window.rt = setTimeout(render, 150); });
+    render();
+  </script>
+</body>
+</html>
